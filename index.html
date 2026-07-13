@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOC 101 · The Waiting Room: Sociology of Health Care</title>
+<style>
+  :root{
+    --ink:#22223b; --paper:#fdf8f2; --card:#ffffff; --accent:#b5651d; --accent2:#2a6f6f;
+    --gold:#d9a441; --good:#2e7d32; --bad:#b3261e; --soft:#f3e9dc; --line:#e5d9c9;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:Georgia,'Times New Roman',serif; background:var(--paper); color:var(--ink); line-height:1.6;}
+  .wrap{max-width:820px; margin:0 auto; padding:16px;}
+  header.top{background:var(--ink); color:#fff; padding:20px 16px; text-align:center;}
+  header.top h1{font-size:1.5rem; letter-spacing:.5px;}
+  header.top p{color:#d9c8a9; font-size:.95rem; margin-top:4px; font-style:italic;}
+  .progressbar{position:sticky; top:0; z-index:50; background:var(--soft); border-bottom:2px solid var(--line);}
+  .progressbar .inner{max-width:820px; margin:0 auto; padding:8px 16px; display:flex; align-items:center; gap:10px;}
+  .ptrack{flex:1; height:12px; background:#e8dccb; border-radius:8px; overflow:hidden;}
+  .pfill{height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--gold)); transition:width .5s;}
+  .plabel{font-size:.8rem; font-family:Verdana,sans-serif; white-space:nowrap;}
+  .screen{display:none; animation:fade .4s;}
+  .screen.active{display:block;}
+  @keyframes fade{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px; margin:18px 0; box-shadow:0 2px 6px rgba(0,0,0,.06);}
+  .card h2{font-size:1.35rem; color:var(--accent); margin-bottom:8px;}
+  .card h3{font-size:1.05rem; color:var(--accent2); margin:14px 0 6px;}
+  .kicker{font-family:Verdana,sans-serif; font-size:.7rem; text-transform:uppercase; letter-spacing:2px; color:var(--accent2); margin-bottom:4px;}
+  .btn{display:inline-block; font-family:Verdana,sans-serif; font-size:.9rem; background:var(--accent); color:#fff; border:none; border-radius:10px; padding:12px 22px; cursor:pointer; margin-top:12px;}
+  .btn:hover{filter:brightness(1.1);}
+  .btn.secondary{background:var(--accent2);}
+  .btn.ghost{background:transparent; color:var(--accent); border:2px solid var(--accent);}
+  .btn.locked{background:#c9bfae;}
+  .persona-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin-top:12px;}
+  .persona{background:var(--soft); border:2px solid var(--line); border-radius:12px; padding:14px; cursor:pointer; transition:.15s;}
+  .persona:hover{border-color:var(--gold); transform:translateY(-2px);}
+  .persona.selected{border-color:var(--accent); background:#fbeedd;}
+  .persona .emoji{font-size:1.8rem;}
+  .persona h4{margin:4px 0 2px;}
+  .persona p{font-size:.88rem;}
+  .choice{display:block; width:100%; text-align:left; background:var(--soft); border:2px solid var(--line); border-radius:10px; padding:12px 14px; margin:8px 0; cursor:pointer; font-family:Georgia,serif; font-size:.98rem;}
+  .choice:hover{border-color:var(--gold);}
+  .choice.correct{border-color:var(--good); background:#e6f2e6;}
+  .choice.wrong{border-color:var(--bad); background:#f9e3e1;}
+  .choice.picked{border-color:var(--accent);}
+  .feedback{border-left:5px solid var(--gold); background:#fff8ec; padding:12px 14px; border-radius:0 10px 10px 0; margin:10px 0; display:none; font-size:.95rem;}
+  .feedback.show{display:block;}
+  .keyterm{background:#eef4f4; border:1px dashed var(--accent2); border-radius:10px; padding:10px 14px; margin:10px 0; font-size:.93rem;}
+  .keyterm b{color:var(--accent2);}
+  .quote{font-style:italic; text-align:center; padding:14px 20px; color:#5a4632; font-size:1.05rem;}
+  .quote span{display:block; font-style:normal; font-size:.85rem; margin-top:4px; color:var(--accent);}
+  .backstory{background:var(--soft); border-left:4px solid var(--gold); border-radius:0 10px 10px 0; padding:12px 14px; margin:10px 0; font-style:italic; font-size:.95rem;}
+  .sortitem{background:#fff; border:2px solid var(--line); border-radius:10px; padding:10px 12px; margin:8px 0; font-size:.92rem;}
+  .sortitem.done-right{border-color:var(--good); background:#eef7ee;}
+  .verdict{font-family:Verdana,sans-serif; font-size:.78rem; margin-top:6px; display:none;}
+  .verdict.show{display:block;}
+  .scorepill{display:inline-block; font-family:Verdana,sans-serif; font-size:.78rem; background:var(--ink); color:var(--gold); border-radius:20px; padding:4px 12px; margin-left:8px;}
+  textarea{width:100%; min-height:90px; border:2px solid var(--line); border-radius:10px; padding:10px; font-family:Georgia,serif; font-size:.95rem; background:#fffdf9;}
+  textarea:focus{outline:2px solid var(--gold);}
+  input[type=text]{width:100%; border:2px solid var(--line); border-radius:10px; padding:10px; font-family:Georgia,serif; font-size:.95rem;}
+  .navrow{display:flex; justify-content:space-between; align-items:center; margin:10px 0 30px;}
+  .charchip{position:sticky; top:34px; z-index:40; text-align:right; max-width:820px; margin:0 auto; padding:4px 16px 0; pointer-events:none;}
+  .charchip span{background:var(--accent2); color:#fff; font-family:Verdana,sans-serif; font-size:.72rem; border-radius:16px; padding:4px 12px; display:none;}
+  .summarybox{background:#fff; border:2px solid var(--gold); border-radius:12px; padding:16px; white-space:pre-wrap; font-size:.88rem; font-family:Verdana,sans-serif; max-height:420px; overflow:auto;}
+  .grade-table{width:100%; border-collapse:collapse; font-family:Verdana,sans-serif; font-size:.85rem; margin:10px 0;}
+  .grade-table th,.grade-table td{border:1px solid var(--line); padding:8px; text-align:left;}
+  .grade-table th{background:var(--soft);}
+  .note{font-size:.82rem; color:#6b5d4a; font-style:italic; margin-top:8px;}
+  .bigscore{text-align:center; font-size:2.2rem; color:var(--accent); font-family:Verdana,sans-serif; margin:8px 0;}
+  .checklist li{margin:6px 0 6px 18px;}
+  .badge{background:linear-gradient(45deg,#ffd700,#ffed4e); color:#333; border-radius:16px; padding:6px 14px; display:inline-block; font-weight:bold; margin:8px 0; font-family:Verdana,sans-serif; font-size:.8rem;}
+  @media print{ .btn,.progressbar,.charchip{display:none!important;} .screen{display:block!important;} }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>The Waiting Room</h1>
+  <p>Sociology of Health Care &middot; SOC 101: Introduction to Sociology &middot; Essex County College</p>
+  <p style="color:#d9a441; font-size:.85rem; margin-top:2px;">by Prof. Jenika Towana Scott, M.S.W. (PhD Student)</p>
+</header>
+
+<div class="progressbar"><div class="inner">
+  <div class="ptrack"><div class="pfill" id="pfill"></div></div>
+  <div class="plabel" id="plabel">Start</div>
+</div></div>
+<div class="charchip"><span id="charchip"></span></div>
+
+<div class="wrap">
+
+<!-- ============ SCREEN 0: WELCOME ============ -->
+<section class="screen active" id="s0">
+  <div class="card">
+    <p class="kicker">Welcome</p>
+    <h2>Your week in the American health care system</h2>
+    <p>You've got a job, a body that doesn't always cooperate, and a health care system full of forms, deductibles, and decisions that feel deeply personal. Which plan to pick. Whether to go to urgent care. Whether to fill the prescription this month.</p>
+    <p style="margin-top:10px;">But what if these &ldquo;personal&rdquo; choices are actually shaped by <b>policy, cost, and who the system was built to serve</b>? In this simulation you'll navigate four visits through the system, unlock a sociological concept with every choice, and finish by applying the <b>sociological imagination</b> to your own health care story.</p>
+    <p style="margin-top:10px;"><b>How it works:</b> there are no wrong answers in the four visits &mdash; every honest choice unlocks a concept. At the end, the simulation builds a <b>Discussion Forum Starter</b> for your graded post.</p>
+    <h3>First: who are you in this journey?</h3>
+    <p>Pick the student whose situation feels closest to yours &mdash; or the one you want to understand better.</p>
+    <div class="persona-grid" id="personaGrid"></div>
+    <div style="margin-top:14px;">
+      <label for="realname" style="font-family:Verdana,sans-serif; font-size:.8rem;">Your real name (for your completion summary):</label>
+      <input type="text" id="realname" placeholder="Type your name here">
+    </div>
+    <button class="btn" id="startBtn" onclick="tryStart()">Begin &rarr;</button>
+  </div>
+</section>
+
+<!-- ============ SCREENS 1-4: VISITS ============ -->
+<section class="screen" id="s1">
+  <div class="card">
+    <p class="kicker">Visit 1 of 4</p>
+    <h2>Open Enrollment <span class="scorepill" id="pill1">0 pts</span></h2>
+    <p id="v1intro"></p>
+    <div class="backstory">It's open enrollment at work. The &ldquo;good&rdquo; plan eats a huge chunk of your paycheck. The cheap plan has a deductible higher than your savings account.</p>
+    <p><b>What do you choose?</b> (No wrong answers &mdash; choose honestly.)</p>
+    <div id="v1items"></div>
+  </div>
+  <div class="navrow"><button class="btn ghost" onclick="go(0)">&larr; Back</button><button class="btn locked" id="next1" data-lock="1" onclick="guardGo(this,2)">Next &rarr;</button></div>
+</section>
+
+<section class="screen" id="s2">
+  <div class="card">
+    <p class="kicker">Visit 2 of 4</p>
+    <h2>The Symptom You're Ignoring <span class="scorepill" id="pill2">0 pts</span></h2>
+    <div class="backstory">You wake up feeling off &mdash; fever, fatigue, something's not right. You don't get paid sick days, and both urgent care and the ER cost money you don't have lying around.</p>
+    <p><b>What do you do?</b></p>
+    <div id="v2items"></div>
+  </div>
+  <div class="navrow"><button class="btn ghost" onclick="go(1)">&larr; Back</button><button class="btn locked" id="next2" data-lock="1" onclick="guardGo(this,3)">Next &rarr;</button></div>
+</section>
+
+<section class="screen" id="s3">
+  <div class="card">
+    <p class="kicker">Visit 3 of 4</p>
+    <h2>The Pharmacy Counter <span class="scorepill" id="pill3">0 pts</span></h2>
+    <div class="backstory">Your co-pay for a medication you take regularly just jumped. The pharmacist tells you the full price today, and it's more than you budgeted for groceries this week.</p>
+    <p><b>What's your move?</b></p>
+    <div id="v3items"></div>
+  </div>
+  <div class="navrow"><button class="btn ghost" onclick="go(2)">&larr; Back</button><button class="btn locked" id="next3" data-lock="1" onclick="guardGo(this,4)">Next &rarr;</button></div>
+</section>
+
+<section class="screen" id="s4">
+  <div class="card">
+    <p class="kicker">Visit 4 of 4</p>
+    <h2>Not Being Believed <span class="scorepill" id="pill4">0 pts</span></h2>
+    <div class="backstory">You've had unexplained symptoms for months. Your doctor says it's &ldquo;probably stress,&rdquo; and your insurance denies the referral to a specialist as &ldquo;not medically necessary.&rdquo;</p>
+    <p><b>How do you respond?</b></p>
+    <div id="v4items"></div>
+  </div>
+  <div class="navrow"><button class="btn ghost" onclick="go(3)">&larr; Back</button><button class="btn locked" id="next4" data-lock="1" onclick="guardGo(this,5)">Next &rarr;</button></div>
+</section>
+
+<!-- ============ SCREEN 5: REFLECTION ============ -->
+<section class="screen" id="s5">
+  <div class="card">
+    <p class="kicker">Reflection</p>
+    <h2>How This Connects to Sociology</h2>
+    <p><b>What you just experienced:</b> C. Wright Mills defined the <b>sociological imagination</b> as the ability to see the connection between individual experiences and larger social forces. Choosing a plan, going to work sick, rationing pills, being dismissed by a doctor &mdash; each felt like a personal decision, but each reveals a structural pattern shared by millions navigating the same system.</p>
+    <div class="keyterm"><b>The sociological perspective in action:</b> instead of asking &ldquo;Why didn't you just go to the doctor sooner?&rdquo; sociology asks &ldquo;What barriers made timely care difficult to reach in the first place?&rdquo; Choosing coverage isn't poor planning &mdash; it's care priced as a market good. Working while sick isn't lacking discipline &mdash; it's missing paid leave protections. Rationing medication isn't noncompliance &mdash; it's the real cost of chronic illness. Being dismissed isn't being overly sensitive &mdash; it's a documented pattern in whose symptoms get taken seriously.</div>
+    <p><b>Mills' key distinction:</b> what feels like a <em>personal trouble</em> (your deductible, your symptoms, your prescription) becomes a <em>public issue</em> once you recognize that millions of people are navigating the exact same obstacles at the exact same time. Your workarounds are intelligent adaptations to a system with real structural gaps &mdash; not evidence of personal failure.</p>
+    <p class="quote">&ldquo;The first lesson of the sociological imagination is that you are not alone.&rdquo;</p>
+    <h3>Your unlocked concepts</h3>
+    <div id="conceptRecap"></div>
+  </div>
+  <div class="navrow"><button class="btn ghost" onclick="go(4)">&larr; Back</button><button class="btn" onclick="go(6)">Next &rarr;</button></div>
+</section>
+
+<!-- ============ SCREEN 6: CHECK ============ -->
+<section class="screen" id="s6">
+  <div class="card">
+    <p class="kicker">Quick Check</p>
+    <h2>Concept Check <span class="scorepill" id="pill6">0 / 5</span></h2>
+    <p>Five questions on the ideas behind your four visits. Answer all five to unlock Next.</p>
+    <div id="m6items"></div>
+  </div>
+  <div class="navrow"><button class="btn ghost" onclick="go(5)">&larr; Back</button><button class="btn locked" id="next6" data-lock="1" onclick="guardGo(this,7)">Next &rarr;</button></div>
+</section>
+
+<!-- ============ SCREEN 7: CAPSTONE ============ -->
+<section class="screen" id="s7">
+  <div class="card">
+    <p class="kicker">Capstone</p>
+    <h2>Your Health Care Story</h2>
+    <p>Now use the sociological lens on a real moment. If you prefer not to share something personal, use a health care story from the news instead.</p>
+
+    <h3>1 &middot; The moment (biography)</h3>
+    <p style="font-size:.9rem;">Describe a specific health care moment from your life or your family's &mdash; a bill, a plan decision, a pharmacy counter moment, a symptom ignored, a time someone wasn't believed.</p>
+    <textarea id="cap1" placeholder="The moment I keep thinking about is&hellip;"></textarea>
+
+    <h3>2 &middot; Trouble vs. issue (the sociological imagination)</h3>
+    <p style="font-size:.9rem;">Where does the <em>personal trouble</em> in your story end, and the <em>public issue</em> begin? What part was shaped by policy, cost structures, or who the system was built to serve?</p>
+    <textarea id="cap2" placeholder="It felt personal, but&hellip;"></textarea>
+
+    <h3>3 &middot; One micro question + one macro question</h3>
+    <p style="font-size:.9rem;">Write one research question about individuals or small groups (micro) and one about large structures or policy (macro).</p>
+    <textarea id="cap3" placeholder="Micro: &hellip;&#10;Macro: &hellip;"></textarea>
+
+    <h3>4 &middot; Popular wisdom to test</h3>
+    <p style="font-size:.9rem;">What do people commonly say about health (&ldquo;people just need to take better care of themselves&rdquo;)? What data would you look for to test it?</p>
+    <textarea id="cap4" placeholder="People say&hellip; but I would check&hellip;"></textarea>
+
+    <button class="btn" onclick="finish()">Finish &amp; Build My Forum Post &rarr;</button>
+    <p class="note">Tip: write at least 2&ndash;3 sentences per box &mdash; your answers become the skeleton of your graded forum post.</p>
+  </div>
+</section>
+
+<!-- ============ SCREEN 8: COMPLETION + FORUM ============ -->
+<section class="screen" id="s8">
+  <div class="card">
+    <p class="kicker">Complete</p>
+    <h2>You finished the journey. 🩺</h2>
+    <div class="bigscore" id="finalScore"></div>
+    <p style="text-align:center;" id="finalMsg"></p>
+    <h3>Your Completion Summary</h3>
+    <p style="font-size:.9rem;">Copy this (or screenshot it) as proof of completion, and use the draft below to write your forum post.</p>
+    <div class="summarybox" id="summaryBox"></div>
+    <button class="btn secondary" onclick="copySummary()">Copy Summary</button>
+    <button class="btn ghost" onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
+  <div class="card">
+    <h2>Now: Your Graded Discussion Forum Post</h2>
+    <p>Head to the class discussion forum and write a post about <b>your experience in this simulation</b> &mdash; connecting the concepts you unlocked to <b>your own health care story</b> (or a story in the news). Your capstone answers above are your raw material.</p>
+    <h3>What a strong post looks like</h3>
+    <ul class="checklist">
+      <li>Names at least <b>two concepts you unlocked</b> (e.g., underinsurance, job lock, presenteeism, medication rationing, medical gaslighting) &mdash; explained accurately in your own words.</li>
+      <li>Connects a concept to a <b>specific, real health care moment</b> &mdash; not a generic statement.</li>
+      <li>Answers: <b>where does the personal trouble end and the public issue begin?</b></li>
+      <li>Is written in <b>your own voice</b>. AI-written, superficial, or one-sentence posts will not earn credit.</li>
+    </ul>
+    <h3>Then respond to two classmates</h3>
+    <p style="font-size:.92rem;">Build on their ideas: ask a sociological question, connect their experience to a concept or your own, or respectfully complicate their conclusion. &ldquo;Great post, I agree!&rdquo; earns nothing.</p>
+    <h3>Grading Breakdown (15 Points)</h3>
+    <table class="grade-table">
+      <tr><th>Points</th><th>Component</th></tr>
+      <tr><td>1</td><td>Participation (counts as attendance)</td></tr>
+      <tr><td>6</td><td>Initial post &mdash; thoughtful, clear, sociologically grounded</td></tr>
+      <tr><td>4</td><td>First peer response &mdash; engaging and meaningful</td></tr>
+      <tr><td>4</td><td>Second peer response &mdash; engaging and meaningful</td></tr>
+    </table>
+    <p class="quote">&ldquo;The purpose of this forum is not just to complete a task, but to practice seeing the world through a sociological lens &mdash; connecting your lived experience to the larger systems at play. Health is personal; access to health care is social.&rdquo;<span>&mdash; Prof. Jenika Towana Scott, M.S.W. (PhD Student)</span></p>
+    <button class="btn" onclick="copyDraft()">Copy My Forum Post Draft</button>
+    <div class="feedback show" style="margin-top:10px;"><b>Heads up:</b> the draft is a <em>starting skeleton</em> built from your own words in the capstone. Expand it, personalize it, and make it sound like you before posting.</div>
+  </div>
+</section>
+
+</div><!-- /wrap -->
+
+<script>
+/* ================= STATE ================= */
+var S = {persona:null, name:'', score:0, done:{}, quiz:0, quizDone:0, concepts:[]};
+var ORDER=['s0','s1','s2','s3','s4','s5','s6','s7','s8'];
+var screens=ORDER.length;
+function $(id){return document.getElementById(id);}
+
+function tryStart(){
+  if(!S.persona){ alert('First, choose a student persona above — tap one of the five cards.'); return; }
+  if(!$('realname').value.trim()){ alert('Please type your name so it appears on your completion summary.'); return; }
+  S.name=$('realname').value.trim();
+  go(1);
+}
+function guardGo(btn,n){
+  if(btn.dataset.lock){ alert('Finish all the activities on this page first — then Next will unlock.'); return; }
+  go(n);
+}
+function unlock(id){ var b=$(id); b.removeAttribute('data-lock'); b.classList.remove('locked'); }
+function go(n){
+  var cur=document.querySelector('.screen.active');
+  if(cur) cur.classList.remove('active');
+  $(ORDER[n]).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  var labels=['Start','Visit 1: Open Enrollment','Visit 2: Getting Sick','Visit 3: The Pharmacy','Visit 4: Not Being Believed','Reflection','Concept Check','Capstone','Done!'];
+  $('plabel').textContent=labels[n];
+  $('pfill').style.width=Math.round(n/(screens-1)*100)+'%';
+  if(n===5) buildRecap();
+}
+function addScore(pts,key){ if(S.done[key]) return; S.done[key]=true; S.score+=pts; }
+function pill(id,txt){ $(id).textContent=txt; }
+
+/* ================= PERSONAS ================= */
+var personas=[
+ {id:'amina', emoji:'👩🏾‍⚕️', name:'Amina, 32', desc:'Home health aide and mom of two. She cares for patients all day &mdash; but her own agency job comes with a bare-bones health plan.',
+  v1:"The irony isn't lost on Amina: she spends her days caring for other people's health, but at open enrollment she's staring at a plan she can barely afford for her own kids."},
+ {id:'marcus', emoji:'👨🏽‍🎓', name:'Marcus, 18', desc:'Fresh out of high school, works part-time at a warehouse. Feels invincible &mdash; hasn&rsquo;t seen a doctor since his last school physical.',
+  v1:"Marcus almost skipped the benefits meeting at the warehouse. He's 18 &mdash; what does he need insurance for? But his aunt told him one ER visit without coverage can follow you for years."},
+ {id:'rosa', emoji:'👩🏽‍🍳', name:'Rosa, 27', desc:'Works two jobs &mdash; and neither one offers benefits. She translates medical forms for her parents and navigates the system for the whole family.',
+  v1:"Neither of Rosa's jobs offers a health plan, so 'open enrollment' means comparing marketplace plans at midnight after her shift &mdash; and translating every option for her parents, too."},
+ {id:'jayden', emoji:'🧑🏿‍💻', name:'Jayden, 16', desc:'High school junior in the early college program. Still on his family&rsquo;s coverage &mdash; but he&rsquo;s the one who reads the fine print for everyone.',
+  v1:"Jayden is technically covered under his family's plan, but he's the one who sits with his mom decoding the deductibles &mdash; because the letters only come in language nobody speaks at home."},
+ {id:'sam', emoji:'🧔🏻', name:'Sam, 45', desc:'Laid off after 22 years in retail. His health coverage ended with his job &mdash; and COBRA costs more than his rent.',
+  v1:"When the store closed, Sam lost more than a paycheck &mdash; his family's health plan went with it. The COBRA letter offered to continue coverage&hellip; for more than his monthly rent."}
+];
+var pg=$('personaGrid');
+personas.forEach(function(p){
+  var d=document.createElement('div'); d.className='persona'; d.setAttribute('role','button'); d.tabIndex=0;
+  d.innerHTML='<div class="emoji">'+p.emoji+'</div><h4>'+p.name+'</h4><p>'+p.desc+'</p>';
+  function pick(){ document.querySelectorAll('.persona').forEach(function(x){x.classList.remove('selected');});
+    d.classList.add('selected'); S.persona=p;
+    $('v1intro').innerHTML=p.v1;
+    var c=$('charchip'); c.textContent='Playing as '+p.name; c.style.display='inline-block'; }
+  d.onclick=pick; d.onkeydown=function(e){if(e.key==='Enter'||e.key===' ')pick();};
+  pg.appendChild(d);
+});
+
+/* ================= CONCEPTS ================= */
+var C={
+ "Underinsurance":{d:"Having insurance coverage that is technically active but insufficient to protect against high medical costs.",p:"A high-deductible plan can mean you're 'covered' on paper while still avoiding care because you can't afford to meet the deductible.",s:"Researchers distinguish underinsurance from being fully uninsured, showing that having a policy doesn't guarantee meaningful financial protection when illness strikes."},
+ "Health Care as a Commodity":{d:"Access to care is distributed through the market &mdash; ability to pay &mdash; rather than purely through medical need.",p:"Choosing a plan based on what you can afford rather than what covers you best means your care is shaped by your bank account, not just your health.",s:"Medical sociologists contrast systems where health care functions as a market commodity with systems that treat it as a guaranteed social good, noting very different outcomes for equity and access."},
+ "Job Lock":{d:"Staying in a job primarily to keep employer-sponsored health insurance, rather than for the work itself.",p:"Feeling stuck in a job because you're afraid to lose coverage isn't lacking ambition &mdash; it's a rational response to a system that ties basic health access to employment.",s:"Sociologists and economists use 'job lock' to describe how tying insurance to employment restricts labor mobility and traps workers in roles that may not otherwise fit them."},
+ "Presenteeism":{d:"Coming to work while sick, often due to lack of paid leave or fear of job or income loss.",p:"Going to work while unwell isn't about toughness &mdash; it's frequently a forced choice for workers without paid sick leave or savings to fall back on.",s:"Sociologists studying labor conditions link presenteeism to the absence of paid leave policies, noting it can also spread illness through workplaces and communities."},
+ "The Emergency Room as Safety Net":{d:"Using emergency departments for care that could be handled elsewhere, often because other access points are unaffordable or unavailable.",p:"Waiting until things are bad enough for the ER isn't recklessness &mdash; for people without accessible primary care, it can be the only realistic option.",s:"Health sociologists describe how gaps in preventive and primary care push people toward emergency departments, which are costlier and often address problems only once they've escalated."},
+ "Delayed Care":{d:"Postponing needed medical treatment due to cost, access barriers, or distrust of providers.",p:"Waiting it out at home instead of seeking care can be a way of managing cost anxiety, even when it risks letting a condition worsen.",s:"Research on health-seeking behavior links delayed care to financial barriers and past negative experiences with providers &mdash; not simply to personal neglect of one's health."},
+ "Medication Rationing":{d:"Reducing prescribed dosage or frequency of medication to make a limited supply last longer, usually due to cost.",p:"Stretching out pills isn't a failure to follow doctor's orders &mdash; it's an attempt to balance medical need against what you can actually afford.",s:"Public health researchers document medication rationing as a widespread response to prescription costs, particularly among people managing chronic conditions."},
+ "Patient Advocacy & Health Literacy":{d:"The knowledge and confidence needed to navigate the health system, ask questions, and seek alternatives.",p:"Knowing to ask about a generic alternative is a skill &mdash; one shaped by prior experience, education, and comfort challenging authority figures.",s:"Health literacy is unevenly distributed across education and class lines, meaning some patients are better positioned to advocate for cheaper or better options than others."},
+ "Medical Gaslighting":{d:"The dismissal or minimization of a patient's reported symptoms, often disproportionately affecting women and marginalized groups.",p:"Being told your symptoms are 'probably stress' without further investigation can leave you doubting your own experience of your body.",s:"Medical sociologists have documented how symptom dismissal correlates with gender, race, and class &mdash; shaping whose pain is taken seriously and whose is questioned."},
+ "Prior Authorization as Gatekeeping":{d:"An insurance requirement that a provider justify a treatment or referral as necessary before it will be covered.",p:"Getting a referral denied as 'not medically necessary' can feel like an insurance company overruling your own doctor's judgment about your body.",s:"Sociologists studying health bureaucracy describe prior authorization as administrative gatekeeping that can delay or block care regardless of clinical need."},
+ "The Price of Bypassing the System":{d:"The financial cost of paying out of pocket to skip insurance barriers and access care directly.",p:"Paying out of pocket for a specialist can get you answers faster &mdash; but only if you have money to spend on care your insurance was supposed to cover.",s:"This pattern illustrates a two-tiered system, where those with financial means can bypass administrative delays that leave others waiting or going without care."}
+};
+
+/* ================= VISITS ================= */
+var visits=[
+ {el:'v1items', next:'next1', pillId:'pill1', ch:[
+   {t:'📉 Pick the low-premium, high-deductible plan and hope you stay healthy', r:"Betting on staying healthy with a high-deductible plan is a common strategy &mdash; and a sign of a system that makes 'coverage' and 'affordable care' two different things.", c:'Underinsurance'},
+   {t:'💳 Pick the comprehensive plan and cut other expenses to afford it', r:'Cutting other expenses to afford real coverage shows how health care costs compete directly with basic needs like food and housing.', c:'Health Care as a Commodity'},
+   {t:'😬 Stay in your current job mainly because you can&rsquo;t risk losing coverage', r:"Staying in a job mainly for the health plan reveals how insurance access can quietly limit people's career choices and freedom to leave.", c:'Job Lock'}]},
+ {el:'v2items', next:'next2', pillId:'pill2', ch:[
+   {t:'💼 Push through and go to work anyway', r:"Going to work sick often isn't a personal choice about toughness &mdash; it reflects the absence of paid sick leave protections many workers still lack.", c:'Presenteeism'},
+   {t:'🏥 Go to urgent care and worry about the bill later', r:'Seeking care despite the cost anxiety shows how people are often forced to choose between their health and their finances in the moment.', c:'The Emergency Room as Safety Net'},
+   {t:'🛌 Wait it out at home and hope it passes on its own', r:'Waiting it out at home is a common response when the cost of care feels riskier than the illness itself &mdash; a sign of real access barriers.', c:'Delayed Care'}]},
+ {el:'v3items', next:'next3', pillId:'pill3', ch:[
+   {t:'✂️ Stretch the pills further than prescribed to make them last', r:'Stretching medication to make it last is a widely documented response to rising prescription costs, especially for chronic conditions.', c:'Medication Rationing'},
+   {t:'📞 Call your doctor to ask about a cheaper generic option', r:'Advocating for a cheaper alternative takes both knowledge of the system and confidence to question a provider &mdash; skills not everyone has equal access to.', c:'Patient Advocacy & Health Literacy'},
+   {t:'🙅 Skip filling it this month and hope you&rsquo;re fine', r:"Skipping a fill because of cost is one of the clearest signs of underinsurance &mdash; coverage that exists on paper but doesn't guarantee affordable access.", c:'Underinsurance'}]},
+ {el:'v4items', next:'next4', pillId:'pill4', ch:[
+   {t:'📋 Push back, appeal the denial, and ask for a second opinion', r:'Appealing a denial pushes back against a system where insurers, not just doctors, help decide what care you receive.', c:'Prior Authorization as Gatekeeping'},
+   {t:'🤷 Accept it and try to manage the symptoms yourself', r:"Being told your symptoms are 'probably stress' without further testing reflects a documented pattern of symptom dismissal in medicine.", c:'Medical Gaslighting'},
+   {t:'💸 Pay out of pocket to see a specialist directly', r:'Paying out of pocket to skip the wait shows how those with financial means can often bypass barriers that leave others stuck.', c:'The Price of Bypassing the System'}]}
+];
+visits.forEach(function(v,i){
+  var host=$(v.el);
+  var d=document.createElement('div'); d.className='sortitem';
+  var btns=v.ch.map(function(c,j){return '<button class="choice" onclick="vpick(this,'+i+','+j+')">'+c.t+'</button>';}).join('');
+  d.innerHTML=btns+'<div class="verdict" id="vv'+i+'"></div>';
+  host.appendChild(d);
+});
+function vpick(btn,i,j){
+  var item=btn.closest('.sortitem'); if(item.dataset.done) return; item.dataset.done=1;
+  item.querySelectorAll('.choice').forEach(function(b){b.disabled=true; b.style.opacity=.55;});
+  btn.classList.add('picked'); btn.style.opacity=1;
+  var c=visits[i].ch[j]; var ex=C[c.c];
+  S.concepts.push(c.c);
+  addScore(2,'v_'+i);
+  item.classList.add('done-right');
+  var v=$('vv'+i);
+  v.innerHTML='<b style="color:var(--good)">&#10003;</b> '+c.r+
+   '<div class="badge">🔓 Concept unlocked: '+c.c+'</div>'+
+   '<div class="keyterm"><b>'+c.c+'</b> &mdash; '+ex.d+'<br><br><b>For you personally:</b> '+ex.p+'<br><br><b>Sociologically:</b> '+ex.s+'</div>';
+  v.classList.add('show');
+  pill(visits[i].pillId,'2 pts');
+  unlock(visits[i].next);
+}
+
+/* ================= RECAP ================= */
+function buildRecap(){
+  var host=$('conceptRecap'); host.innerHTML='';
+  var seen={};
+  S.concepts.forEach(function(name){
+    if(seen[name]) return; seen[name]=1;
+    var ex=C[name];
+    var d=document.createElement('div'); d.className='keyterm';
+    d.innerHTML='✨ <b>'+name+'</b> &mdash; '+ex.d;
+    host.appendChild(d);
+  });
+  if(!S.concepts.length){ host.innerHTML='<p class="note">Complete the four visits to unlock concepts.</p>'; }
+}
+
+/* ================= CONCEPT CHECK ================= */
+var m6data=[
+ {q:'Staying in a job mainly to keep the health insurance is called&hellip;', opts:['Presenteeism','Job lock','Delayed care'], a:1, e:'Job lock: tying insurance to employment restricts people\'s freedom to leave.'},
+ {q:'Having a plan that\'s active on paper but doesn\'t protect you from big costs is&hellip;', opts:['Underinsurance','Full coverage','Prior authorization'], a:0, e:'Underinsurance: coverage without meaningful financial protection.'},
+ {q:'Going to work sick because you have no paid sick days is known as&hellip;', opts:['Job lock','Medication rationing','Presenteeism'], a:2, e:'Presenteeism &mdash; linked to missing paid-leave protections, not personal toughness.'},
+ {q:'A doctor dismissing symptoms as &ldquo;probably stress&rdquo; without investigation &mdash; a pattern documented especially for women and marginalized groups &mdash; is called&hellip;', opts:['Medical gaslighting','Health literacy','The safety net'], a:0, e:'Medical gaslighting: symptom dismissal that correlates with gender, race, and class.'},
+ {q:'According to C. Wright Mills, your deductible stress becomes a public issue when&hellip;', opts:['You complain about it online','Millions face the same barrier because of how the system is structured','It costs more than $1,000'], a:1, e:'Personal troubles become public issues when they reflect widespread, structural patterns.'}
+];
+m6data.forEach(function(it,i){
+  var d=document.createElement('div'); d.className='sortitem';
+  var btns=it.opts.map(function(o,j){return '<button class="choice" onclick="m6pick(this,'+i+','+j+')">'+String.fromCharCode(97+j)+') '+o+'</button>';}).join('');
+  d.innerHTML='<b>Q'+(i+1)+'. '+it.q+'</b>'+btns+'<div class="verdict" id="m6v'+i+'"></div>';
+  $('m6items').appendChild(d);
+});
+function m6pick(btn,i,j){
+  var it=m6data[i]; var item=btn.closest('.sortitem'); var v=$('m6v'+i);
+  if(item.dataset.done) return;
+  item.dataset.done=1;
+  item.querySelectorAll('.choice').forEach(function(b){b.disabled=true;});
+  S.quizDone++;
+  if(j===it.a){ btn.classList.add('correct'); S.quiz++; addScore(2,'m6_'+i);
+    v.innerHTML='<b style="color:var(--good)">&#10003;</b> '+it.e;
+  } else { btn.classList.add('wrong');
+    item.querySelectorAll('.choice')[it.a].classList.add('correct');
+    v.innerHTML='<b style="color:var(--bad)">The answer is '+String.fromCharCode(97+it.a)+'.</b> '+it.e;
+  }
+  v.classList.add('show');
+  pill('pill6', S.quiz+' / 5');
+  if(S.quizDone===5){ unlock('next6'); }
+}
+
+/* ================= CAPSTONE / FINISH ================= */
+var MAXPTS = 8+10+10; // visits(8), check(10), capstone(10)
+function finish(){
+  var caps=[$('cap1').value.trim(),$('cap2').value.trim(),$('cap3').value.trim(),$('cap4').value.trim()];
+  if(caps.some(function(c){return c.length<20;})){
+    if(!confirm('Some of your capstone answers look very short. Short answers make a weak forum post. Continue anyway?')) return;
+  }
+  addScore(10,'capstone');
+  var pct=Math.round(S.score/MAXPTS*100);
+  $('finalScore').textContent=S.score+' / '+MAXPTS+' points ('+pct+'%)';
+  $('finalMsg').textContent = pct>=85 ? 'Outstanding — you can see the system behind the symptoms.' :
+    pct>=65 ? 'Solid work — review the concepts you missed, then bring your story to the forum.' :
+    'You completed the journey — revisit the reflection page, then bring your story to the forum.';
+  var d=new Date();
+  var lines=[
+   '===== SOC 101 · THE WAITING ROOM — COMPLETION SUMMARY =====',
+   'Course: SOC 101 · Prof. Jenika Towana Scott, M.S.W. (PhD Student)',
+   'Student: '+(S.name||'(no name entered)'),
+   'Persona played: '+(S.persona?S.persona.name:'—'),
+   'Date completed: '+d.toLocaleDateString()+' '+d.toLocaleTimeString(),
+   'Total score: '+S.score+' / '+MAXPTS+' ('+pct+'%)',
+   'Concept check: '+S.quiz+' / 5',
+   'Concepts unlocked: '+(S.concepts.join('; ')||'—'),
+   '',
+   '--- MY CAPSTONE ANSWERS ---',
+   '1) My health care moment: '+caps[0],
+   '2) Personal trouble vs. public issue: '+caps[1],
+   '3) Micro & macro questions: '+caps[2],
+   '4) Popular wisdom I would test: '+caps[3]
+  ];
+  $('summaryBox').textContent=lines.join('\n');
+  S.draft =
+'FORUM POST DRAFT (expand this in your own voice — do not post as-is):\n\n'+
+'Completing The Waiting Room simulation as '+(S.persona?S.persona.name:'a fellow student')+', two concepts stuck with me: '+(S.concepts.slice(0,2).join(' and ')||'[name your concepts]')+'. In my own life, '+(caps[0]||'[describe your specific health care moment here]')+'\n\n'+
+'Using my sociological imagination, I can see where the personal trouble ends and the public issue begins: '+(caps[1]||'[explain what was shaped by policy, cost, or system design]')+'\n\n'+
+'Looking at this issue through both lenses, I would ask: '+(caps[2]||'[your micro and macro questions]')+'\n\n'+
+'People often say we just need to take better care of ourselves. '+(caps[3]||'[what belief would you test, and with what evidence?]')+' Health is personal — but access to health care is social, and this simulation helped me see the difference.\n\n'+
+'[Now add: one thing that genuinely surprised you, and one question you want to ask your classmates.]';
+  go(8);
+}
+function copySummary(){ copyText($('summaryBox').textContent, 'Summary copied! Paste it somewhere safe.'); }
+function copyDraft(){ copyText(S.draft||'', 'Draft copied! Paste it into a document, make it yours, then post.'); }
+function copyText(t,msg){
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(function(){alert(msg);},function(){fallbackCopy(t,msg);}); }
+  else fallbackCopy(t,msg);
+}
+function fallbackCopy(t,msg){
+  var ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); alert(msg);}catch(e){ alert('Please select and copy the text manually.'); }
+  document.body.removeChild(ta);
+}
+</script>
+</body>
+</html>
